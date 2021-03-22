@@ -47,7 +47,14 @@ def main(argv: enumerate):
 
     # Prompt user for target directory and get list of directory contents
     print("2. Input path to target directory, or leave blank to target the script's current directory")
-    directory_list, input_directory = openInputDir()
+
+    user_input = input("Directory Path: ")
+    print()
+    directory_list, input_directory = openInputDir(user_input)
+    while isinstance(directory_list, Exception):
+        user_input = input("\nInvalid directory path, try again: ")
+        print()
+        directory_list, input_directory = openInputDir(user_input)
 
     t0 = time.perf_counter()  # start timer
 
@@ -100,34 +107,31 @@ def readInputCSV(input_CSV: str):
                         return_doc_list.append(stripped_line)
     except Exception as exc:
         print(exc)
-        return exc
+        return Exception
 
     print("Finished reading CSV\n")
     return return_doc_list
 
 
-def openInputDir():
+def openInputDir(input_dir: str):
     # TODO Remove input checks from scope
     """
     Try opening a directory and listing its contents
     If invalid, try again
     """
-    input_dir = input("Directory Path: ")
-    print()
-    while True:
-        try:
-            if input_dir == "":
-                dir_list = os.listdir()
-                input_dir = os.path.dirname(os.path.abspath(__file__))
-            else:
-                input_dir = input_dir.replace('\"', "")
-                dir_list = os.listdir(input_dir)
+    try:
+        if input_dir == "":
+            dir_list = os.listdir()
+            input_dir = os.path.dirname(os.path.abspath(__file__))
+        else:
+            input_dir = input_dir.replace('\"', "")
+            dir_list = os.listdir(input_dir)
 
-            print("Successfully found directory\n")
-            return dir_list, input_dir
-        except:
-            input_dir = input("Invalid directory path, try again: ")
-            print()
+        print("Successfully found directory\n")
+        return dir_list, input_dir
+    except Exception as exc:
+        print(exc)
+        return exc, input_dir
 
 
 def renameDocuments(number_list: list, dir_list: list):
