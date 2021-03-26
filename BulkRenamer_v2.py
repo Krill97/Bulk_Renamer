@@ -10,11 +10,10 @@ import sys
 import csv
 import time
 import xlsxwriter
-import docx
 import pandas
 
 
-def main(argv: enumerate):
+def main(argv):
     """
     Main Script Function
     """
@@ -22,11 +21,7 @@ def main(argv: enumerate):
     # "C:\Users\simdif\OneDrive - APA Group\Downloads\Book1.csv"
     # C:\Users\simdif\OneDrive - APA Group\Krill49\Text_Files
 
-    # print("PYTHONPATH:", os.environ.get('PYTHONPATH'))
-    # print("PATH:", os.environ.get('PATH'))
-    # print("\n")
-
-    print("This script takes an input CSV containing document numbers and an input directory,\n" +
+    print("This script takes an input CSV containing document numbers and an input  directory,\n" +
           "then renames the files in the directory to the specified document numbers in the CSV\n\n" +
           "NOTE: This script WILL NOT create new files or change file extensions of existing files,\n" +
           "so ensure that the target directory already contains the \n" +
@@ -114,7 +109,6 @@ def readInputCSV(input_CSV: str):
 
 
 def openInputDir(input_dir: str):
-    # TODO Remove input checks from scope
     """
     Try opening a directory and listing its contents
     If invalid, try again
@@ -134,28 +128,54 @@ def openInputDir(input_dir: str):
         return exc, input_dir
 
 
+def buildDocument(doc_number: tuple):
+    """
+    Parse the input document extension, build the appropriate file, and close it
+    Supports: .xlsx, and .txt files
+    """
+    if doc_number[1] == ".xlsx":
+        excel_doc = xlsxwriter.Workbook(doc_number[0])
+        excel_doc.close()
+        return True
+
+    elif doc_number[1] == ".txt":
+        txt_doc = open(doc_number[0], "w")
+        txt_doc.close()
+        return True
+
+    else:
+        return False
+
+
 def renameDocuments(number_list: list, dir_list: list):
+    # TODO create docx, xlsx and txt files if they don't already exist
     """
     Loop through document and directory list and rename documents accordingly
     """
     rename_counter = 0
     file_renamed = [False] * len(dir_list)
+    max_dir_index = len(dir_list) - 1
 
     for i, doc_number in enumerate(number_list):
         for j, initial_file in enumerate(dir_list):
             # avoid making copies of existing document numbers
             if (doc_number in dir_list):
-                print(str(i) + ". " + os.path.basename(doc_number[0]) +
+                print(str(i) + ".\t" + os.path.basename(doc_number[0]) +
                       " already exists in directory... skipping")
                 break
             else:
                 # avoid renaming previously written doc numbers and only rename matching extensions
-                if (dir_list[j][0] in [doc_number[0] for doc_number in number_list]
-                        or number_list[i][1] != dir_list[j][1]
+                if (initial_file[0] in [doc_number[0] for doc_number in number_list]
+                        or doc_number[1] != initial_file[1]
                         or file_renamed[j]):
-                    if j == len(dir_list) - 1:
-                        print("Couldn't find suitable file to rename to " +
-                              os.path.basename(doc_number))
+                    if j == max_dir_index:
+                        if buildDocument(doc_number):
+                            print(str(i) + ".\t" + "Built new file: " +
+                                  os.path.basename(doc_number[0]))
+                            rename_counter += 1
+                        else:
+                            print(str(i) + ".\t" + "Couldn't find suitable file to rename to " +
+                                  os.path.basename(doc_number[0]))
                     else:
                         continue
                 # rename current file to specified document number
@@ -163,7 +183,7 @@ def renameDocuments(number_list: list, dir_list: list):
                     os.rename(initial_file[0], doc_number[0])
                     rename_counter += 1
                     file_renamed[j] = True
-                    print(str(i) + ". " + os.path.basename(initial_file[0]) +
+                    print(str(i) + ".\t" + os.path.basename(initial_file[0]) +
                           " -> " + os.path.basename(doc_number[0]))
                     break
 
@@ -180,4 +200,4 @@ def renameDocuments(number_list: list, dir_list: list):
 
 # driver code
 if __name__ == "__main__":
-    main(enumerate(sys.argv))
+    main(sys.argv)
