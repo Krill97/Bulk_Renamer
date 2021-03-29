@@ -1,3 +1,5 @@
+#!python3
+
 # Python3 script to rename files in a specified folder using an input CSV
 #
 # Author: Simon Di Florio
@@ -10,7 +12,8 @@ import sys
 import csv
 import time
 import xlsxwriter
-import pandas
+# import docx
+# import pandas
 
 
 def main(argv):
@@ -31,10 +34,9 @@ def main(argv):
     print("1. Input full path to CSV containing document numbers\n" +
           "   (Shift + Right click CSV file in file explorer, select 'Copy as Path' and paste below)")
 
-    # user_input = input("CSV Path: ")
+    user_input = input("CSV Path: ")
     print()
-    csv_list = readInputCSV(
-        "C:\\Users\\simdif\\OneDrive - APA Group\\Downloads\\Book1.csv")
+    csv_list = readInputCSV(user_input)
     while isinstance(csv_list, Exception):
         user_input = input("\nInvalid CSV Path, try again: ")
         print()
@@ -77,6 +79,7 @@ def main(argv):
 
     # exit program prompt
     input("Press enter to exit ")
+    sys.exit(0)
 
 
 def readInputCSV(input_CSV: str):
@@ -92,17 +95,21 @@ def readInputCSV(input_CSV: str):
             csv_reader = csv.reader(csvFile)
             print("Valid CSV, reading...")
 
-            for line in csv_reader:
-                if line and line[0] not in return_doc_list:
+            for i, line in enumerate(csv_reader, 1):
+                if len(line):
                     stripped_line = str.strip(line[0])
-                    if ' ' in stripped_line:
-                        print(stripped_line +
-                              " contains whitespace... skipping")
+                    if stripped_line not in return_doc_list:
+                        if ' ' in stripped_line:
+                            print(str(i) + ".\t" + stripped_line +
+                                  " contains whitespace... skipping")
+                        else:
+                            return_doc_list.append(stripped_line)
                     else:
-                        return_doc_list.append(stripped_line)
+                        print(str(i) + ".\t" + stripped_line +
+                              " is a duplicate... skipping")
     except Exception as exc:
         print(exc)
-        return Exception
+        return exc
 
     print("Finished reading CSV\n")
     return return_doc_list
@@ -137,18 +144,20 @@ def buildDocument(doc_number: tuple):
         excel_doc = xlsxwriter.Workbook(doc_number[0])
         excel_doc.close()
         return True
-
+    # elif doc_number[1] == ".docx":
+    #     word_doc = docx.Document()
+    #     word_doc.Save(doc_number[0])
+    #     return True
     elif doc_number[1] == ".txt":
         txt_doc = open(doc_number[0], "w")
         txt_doc.close()
         return True
-
     else:
         return False
 
 
 def renameDocuments(number_list: list, dir_list: list):
-    # TODO create docx, xlsx and txt files if they don't already exist
+    # TODO create docx files if they don't already exist
     """
     Loop through document and directory list and rename documents accordingly
     """
